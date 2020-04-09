@@ -50,18 +50,29 @@ public class FBMmain {
         FBMmain main = new FBMmain();
         ArrayList<String>[] keysOfQarray = new ArrayList[numOfQ];
         for(int queryN = 0; queryN < numOfQ; queryN++){
-            if(ScoreMapArray[queryN].get("null") == -1.0){
+            keysOfQarray[queryN] = new ArrayList<>();
+            if(ScoreMapArray[queryN].size() == 1 && ScoreMapArray[queryN].containsKey("empty")){
                 keysOfQarray[queryN] = null;
+                // debugging purpose
+                //System.out.println("Skipping query# " + (queryN+1)); 
                 continue;
             }
 
             keysOfQarray[queryN] = main.buildKey(ScoreMapArray[queryN]);
-            System.out.println("size: " + ScoreMapArray[queryN].size() + " Query: " + (queryN+1));
+            // debugging purpose
+            //System.out.println("size: " + ScoreMapArray[queryN].size() + " Query: " + (queryN+1));
         }
         
         // building a HashMap<String, Double> for making its Graph
         HashMap<String, Double>[] queryMaps = new HashMap[numOfQ];
         for(int queryN = 0; queryN < numOfQ; queryN++){
+            queryMaps[queryN] = new HashMap<>();
+            if(keysOfQarray[queryN] == null){
+                queryMaps[queryN].put("empty", -1.0);
+                // debugging purpose
+                //System.out.println("Skipping query# " + (queryN+1));
+                continue;
+            }
             for(String key : keysOfQarray[queryN]){
                 String[] docName = key.split(" ");
                 String anotherPossibleKey = docName[1] + " " + docName[0];
@@ -78,6 +89,19 @@ public class FBMmain {
         // Building a Graph for Each Query 
         FBCgraph[] graph = new FBCgraph[numOfQ];
         for(int queryN = 0; queryN < numOfQ; queryN++){
+            if(queryMaps[queryN].size() == 1){
+                if(queryMaps[queryN].containsKey("empty")){
+                    continue;
+                }
+                else{
+                    System.out.println("\nGraph cannot be built as it has only 1 entry"); 
+                    System.out.println("\n----- Displaying Centrality Measure Result -----\n");
+                    for(String docName : queryMaps[queryN].keySet()){
+                        System.out.println(queryN+1 + " Q0 " + docName + " " + 1 + " " + 0 + " Default");
+                    }
+                   continue; 
+                }
+            }
             graph[queryN] = new FBCgraph(queryMaps[queryN]);
             System.out.println("\nTotal # of Vertices: " + graph[queryN].getGraph().getVertexCount() + " Total # of Edges: " +graph[queryN].getGraph().getEdgeCount());
             // Betweenness Centrality is performed here
