@@ -5,14 +5,11 @@
  */
 package capstoneeb02;
 
-import java.io.File;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,62 +18,71 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 /**
  *
  * @author kingtahir
  */
-public class FrequencyBasedModel {
-    
+public class TopicMap {
     public int numOfTopics = 200;
     int counter = 0;
-    //String dataDir = "/Users/kingtahir/Documents/TestCorpus";
-    String dataDir = "/Users/kingtahir/Downloads/clueweb09PoolFilesTest";
-    ArrayList<String> list = new ArrayList<String>(); 
-    ArrayList<String> fileNameList = new ArrayList<String>();
-    ArrayList<String> textList = new ArrayList<String>();
-    ArrayList<String> noSTPtextList = new ArrayList<String>();
-    HashMap<String,String> fileContentsMap = new HashMap<String, String>();
-    HashMap<String,Double> bigCompleteMap = new HashMap<>();
-    //HashMap<String,Double> freqMap = new HashMap<>();
     
-    public FrequencyBasedModel() throws Exception{
-        File folder = new File(dataDir);
-        File[] listOfFiles = folder.listFiles();
-        for(File file : listOfFiles) {
-            if (file.isFile()) {
-                String tmpFilePath = dataDir + "/" + file.getName();
-                counter++;
-                //System.out.println("Path# " + counter + ": " + tmpFilePath);
-                // Adding the file contents in a format of html which I take care of later
-                list.add(readFile(tmpFilePath));
-                // Adding file names into an ArrayList
-                fileNameList.add(file.getName());
+    public String dataDir = "/Users/kingtahir/Downloads/clueweb09PoolFilesTest";
+    public ArrayList<String> htmlFileContents = new ArrayList<String>(); 
+    public ArrayList<String> fileNameList = new ArrayList<String>();
+    public ArrayList<String> textList = new ArrayList<String>();
+    public HashMap<String,String> fileContentsMap = new HashMap<String, String>();
+    public HashMap<String,Double>[] queryMaps = new HashMap[numOfTopics];
+    private HashMap<String,Double>[] ScoreMapArray;
+    
+    public TopicMap() throws IOException{
+        // Step 1: Read the TF-IDF result file to obtain doc entries
+        PreProcess prep = new PreProcess();
+        this.ScoreMapArray = prep.getScoreMapArray();
+
+        File corpus = new File(dataDir);
+        File[] listOfFiles = corpus.listFiles();
+        for (int q = 0; q < numOfTopics; q++) {
+            htmlFileContents.clear();
+            fileNameList.clear();
+            
+            // Step 2: Retrieve the file contents of the ones lsted in each 
+            //         ScoreMapArray element
+            for (File file : listOfFiles) {
+                if (file.isFile() && this.ScoreMapArray[q].containsKey(file.getName())) {
+                    String tmpFilePath = dataDir + "/" + file.getName();
+                    counter++;
+                    // Adding the file contents in a format of html of which I take care later
+                    htmlFileContents.add(readFile(tmpFilePath));
+                    // Adding file names into an ArrayList
+                    fileNameList.add(file.getName());
+                }
             }
+            
+            // Step 3: Convert the html contents to string
+            textList.clear();
+            for (String str : htmlFileContents) {
+                // Converting file contents from html to String
+                Document document = Jsoup.parse(str, "ASCII");
+                // Adding file contents in String format 
+                textList.add(document.text());
+            }
+            // Step 4: Remove the stopwords
+            int fileNO = 0;
+            fileContentsMap.clear();
+            for (String str : textList) {
+                // Removing stop words from String file contents
+                fileContentsMap.put(fileNameList.get(fileNO), removeStopWords(str));
+                fileNO++;
+            }
+            // Step 5: Generating a Graph entries (nodes and edges) for each 
+            //         query topic then storing it in a text file
+            queryMaps[q] = buildMap(fileContentsMap);
+            queryMaps[q] = sortMap(queryMaps[q]);
+            writeToText(queryMaps[q],(q+1));
         }
-        //System.out.println(list.get(0));
-        
-        for(String str : list){
-            // Converting file contents from html to String
-            Document document = Jsoup.parse(str, "ASCII");
-            // Adding file contents in String format 
-            textList.add(document.text());
-        }
-        int fileNO = 0;
-        for(String str : textList){
-            // Removing stop words from String file contents
-            noSTPtextList.add(removeStopWords(str));
-            fileContentsMap.put(fileNameList.get(fileNO), removeStopWords(str));
-            fileNO++;
-        }
-        // Generating a Complete Big Graph entries (nodes and edges)
-        // then storing it in a text file
-//        bigCompleteMap = buildMap(fileContentsMap);
-//        bigCompleteMap = sortMap(bigCompleteMap);
-//        writeToText(this.bigCompleteMap);
-        
-        // reconstructing the Complete Big Graph entries from the text file
-        readFromText("/Users/kingtahir/Documents/BigCompleteGraph.txt");
     }
     
     private String readFile(String filePath) throws IOException {
@@ -170,10 +176,6 @@ public class FrequencyBasedModel {
         return freqMap;
     } 
     
-    public ArrayList<String> getNoSTPtextList(){
-        return this.noSTPtextList;
-    }
-    
     public HashMap<String, Double> sortMap(HashMap<String, Double> unsortedVMap){
         // Create a list from elements of HashMap
         List<Map.Entry<String, Double>> list = new LinkedList<Map.Entry<String, Double>>(unsortedVMap.entrySet());
@@ -194,8 +196,9 @@ public class FrequencyBasedModel {
         return sortedVMap;
     }
     
-    public void writeToText(HashMap<String,Double> bigCompleteMap) throws IOException{
-        FileWriter resultFile = new FileWriter("/Users/kingtahir/Documents/BigCompleteGraph.txt");
+    public void writeToText(HashMap<String,Double> bigCompleteMap, int topicNum) throws IOException{
+        String fileName = "" + topicNum;
+        FileWriter resultFile = new FileWriter("/Users/kingtahir/Documents/topic_maps/Graph_" + fileName + ".txt");
         
         for(String nodes : bigCompleteMap.keySet()){
             resultFile.write(nodes + "||" + bigCompleteMap.get(nodes) + "\n");
@@ -203,29 +206,4 @@ public class FrequencyBasedModel {
         resultFile.close();
         System.out.println("Successfully wrote to the file.");
     }
-    
-    public void readFromText(String path) throws Exception{
-        BufferedReader br = new BufferedReader(new FileReader(path));
-
-        String line = br.readLine();
-
-        while (line != null) {
-            String[] entry = line.split("\\|\\|");
-            this.bigCompleteMap.put(entry[0], Double.parseDouble(entry[1]));
-            line = br.readLine();
-        }
-        br.close();
-    }
-    
-    public static void main(String[] args) throws Exception {
-      
-        int counter = 1;
-        FrequencyBasedModel fbm = new FrequencyBasedModel();
-        for(String key : fbm.bigCompleteMap.keySet()){
-            double value = fbm.bigCompleteMap.get(key);
-            System.out.println("" + counter + ": " + key + " frequency = " + value);
-            counter++;
-        }
-    }
-  
 }

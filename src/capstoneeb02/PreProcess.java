@@ -20,7 +20,7 @@ public class PreProcess {
     private String relevanceJudgementPath = "/Users/kingtahir/Documents/result_TF_IDF.txt";
     private HashMap<String,Double>[] ScoreMapArray;
     
-    public PreProcess(HashMap<String,String> fileContentsMap) throws IOException{
+    public PreProcess() throws IOException{
         
         this.ScoreMapArray = new HashMap[numOfTopics];
         
@@ -55,11 +55,11 @@ public class PreProcess {
                     this.ScoreMapArray[index] = new HashMap<String,Double>();
                     // String = Document name, Double = Original TF-IDF OR SDM score
                 }
-                if(fileContentsMap.containsKey(docName)){
+               // if(fileContentsMap.containsKey(docName)){
                     // each hashmap represents the graph entries (200 docs) for its particular
                     // query number. query number = index + 1
                     this.ScoreMapArray[index].put(docName, score);
-                }
+               // }
 
                 prevQueryNo = queryNo;
                 line = br.readLine();
