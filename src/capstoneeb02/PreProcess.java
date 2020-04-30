@@ -18,15 +18,18 @@ public class PreProcess {
     
     public int numOfTopics = 200;
     private String relevanceJudgementPath = "/Users/kingtahir/Documents/result_TF_IDF.txt";
-    private HashMap<String,Double>[] ScoreMapArray = new HashMap[numOfTopics];
+    private HashMap<String,Double>[] ScoreMapArray;
     
-    public PreProcess(HashMap<String,String> fileContentsMap) throws IOException{
+    public PreProcess() throws IOException{
+        
+        this.ScoreMapArray = new HashMap[numOfTopics];
         
         BufferedReader br = new BufferedReader(new FileReader(relevanceJudgementPath));
         try {
+            String empty = "empty";
             int prevQueryNo = 0;
             // Theoretical Query Number for double checking inside while loop
-            int theoreticalQN = 1;
+            int theoreticalQN = 0;
             int index = -1;
             String line = br.readLine();
             while (line != null) {
@@ -40,19 +43,23 @@ public class PreProcess {
                      
                     if(queryNo != theoreticalQN){
                         for(theoreticalQN = theoreticalQN; theoreticalQN < queryNo; theoreticalQN++){
-                            ScoreMapArray[theoreticalQN-1] = new HashMap<String,Double>();
-                            ScoreMapArray[theoreticalQN-1].put("null", -1.0);
+                            this.ScoreMapArray[theoreticalQN-1] = new HashMap<String,Double>();
+                            this.ScoreMapArray[theoreticalQN-1].put(empty, -1.0);
+                            // debugging purpose
+//                            for(String str : this.ScoreMapArray[theoreticalQN-1].keySet()){
+//                                System.out.println("query# " + theoreticalQN + " is " + str + " with score: " + this.ScoreMapArray[theoreticalQN-1].get(str));
+//                            } 
                         }
                         index = theoreticalQN - 1;
                     }
-                    ScoreMapArray[index] = new HashMap<String,Double>();
+                    this.ScoreMapArray[index] = new HashMap<String,Double>();
                     // String = Document name, Double = Original TF-IDF OR SDM score
                 }
-                if(fileContentsMap.containsKey(docName)){
+               // if(fileContentsMap.containsKey(docName)){
                     // each hashmap represents the graph entries (200 docs) for its particular
                     // query number. query number = index + 1
-                    ScoreMapArray[index].put(docName, score);
-                }
+                    this.ScoreMapArray[index].put(docName, score);
+               // }
 
                 prevQueryNo = queryNo;
                 line = br.readLine();

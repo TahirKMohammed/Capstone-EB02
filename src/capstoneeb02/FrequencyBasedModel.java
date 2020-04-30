@@ -168,59 +168,7 @@ public class FrequencyBasedModel {
             index++; 
         }
         return freqMap;
-    }
-
-//    public void freqBWfiles(ArrayList<String> noSTPtextList){
-//        // Generates HashMap with key: file names and value: the shared number of words
-//        ArrayList<String> tmpList = noSTPtextList;
-//        int counter1 = 0;
-//        for(String element : noSTPtextList){
-//            String[] elementArray = element.split(" ");
-//            // word length of element
-//            double docword1 = elementArray.length;
-//            int counter2 = 0;
-//            for(String str : tmpList){
-//                if(element.equals(str)){
-//                    continue;
-//                }
-//                if(counter2 == counter1){
-//                    counter2++;
-//                }
-//                int freq = 0;
-//                double docword2 = str.split(" ").length;
-//                double largerwords = docword2;
-//                for(String word : elementArray){
-//                    if(str.contains(word)){
-//                        freq++;
-//                    }
-//                    if(docword1 > docword2){
-//                        largerwords = docword1;
-//                    }
-//                }
-//                
-//                String key = fileNameList.get(counter2) + " " + fileNameList.get(counter1);
-//                if(freqMap.isEmpty()){
-//                    freqMap.put((fileNameList.get(counter1) + " " + fileNameList.get(counter2)), 1/(freq/largerwords));
-//                }
-//                
-//                else if(freqMap.containsKey(key)){
-//                    if(freq/largerwords > freqMap.get(key)){
-//                        freqMap.replace(key, 1/(freq/largerwords));
-//                    }
-//                }
-//                
-//                else{
-//                    freqMap.put((fileNameList.get(counter1) + " " + fileNameList.get(counter2)), 1/(freq/largerwords));
-//                }
-//                
-//                //freqMap.put(("# of shared words between " + fileNameList.get(counter1) + " and " + fileNameList.get(counter2)), freq/largerwords);
-//                counter2++;
-//            }
-//            counter1++;
-//        }
-//        
-//        System.out.println("HashMap has been made");
-//    } 
+    } 
     
     public ArrayList<String> getNoSTPtextList(){
         return this.noSTPtextList;

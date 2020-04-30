@@ -27,14 +27,13 @@ public class FBCgraph {
     
     public FBCgraph(HashMap<String, Double> map){
         int val = map.size();
-        System.out.println("total edges = " + val);
+        
         if(val < 5){
             threshold = 1;
         }
         else{
             threshold =  val/5;
         }
-        System.out.println("Threshld = " + threshold + "\n");
       
         this.graph = new UndirectedSparseGraph<>();
         int thresholdCounter = 0;
@@ -57,7 +56,6 @@ public class FBCgraph {
             }
             thresholdCounter++;
         }
-        
     }
     
     public Graph<String, MyEdge> getGraph(){

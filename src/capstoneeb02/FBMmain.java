@@ -23,85 +23,98 @@ public class FBMmain {
     /**
      * @param args the command line arguments
      */
-    
-    public ArrayList<String> buildKey(HashMap<String,Double> map){
+    public ArrayList<String> buildKey(HashMap<String, Double> map) {
         ArrayList<String> docNames = new ArrayList<>();
         ArrayList<String> keyList = new ArrayList<>();
-        
-        for(String docName : map.keySet()){
+
+        for (String docName : map.keySet()) {
             docNames.add(docName);
         }
-        
-        for(int i = 0; i < docNames.size() - 1; i++){
-            for(int j = i+1; j < docNames.size(); j++){
+
+        for (int i = 0; i < docNames.size() - 1; i++) {
+            for (int j = i + 1; j < docNames.size(); j++) {
                 keyList.add(docNames.get(i) + " " + docNames.get(j));
             }
         }
-        
+
         return keyList;
     }
+
     public static void main(String[] args) throws Exception {
         FrequencyBasedModel fbm = new FrequencyBasedModel();
-        PreProcess prep = new PreProcess(fbm.fileContentsMap);
-        HashMap<String,Double>[] ScoreMapArray = prep.getScoreMapArray();
+        // Step 1: Pre-Process => obtaining doc entries and TF-IDF/SDM score for
+        // each query ranking entries
+        PreProcess prep = new PreProcess();
+        HashMap<String, Double>[] ScoreMapArray = prep.getScoreMapArray();
         int numOfQ = ScoreMapArray.length;
-        System.out.println("Total Number of Queries is: " + numOfQ);
-        // for all queries
-        FBMmain main = new FBMmain();
-        ArrayList<String>[] keysOfQarray = new ArrayList[numOfQ];
-        for(int queryN = 0; queryN < numOfQ; queryN++){
-            if(ScoreMapArray[queryN].get("null") == -1.0){
-                keysOfQarray[queryN] = null;
-                continue;
-            }
 
-            keysOfQarray[queryN] = main.buildKey(ScoreMapArray[queryN]);
-            System.out.println("size: " + ScoreMapArray[queryN].size() + " Query: " + (queryN+1));
-        }
+        // Step 2: possible keys (doc1 doc2) are created for each query ranking
+        // if there are more than 1 doc entry in the ranking
+        FBMmain main;
+        ArrayList<String> keysOfQarray;
+        FileWriter resultFile = new FileWriter("/Users/kingtahir/Documents/improved_result_TF_IDF_with_FBM.txt"); 
         
-        // building a HashMap<String, Double> for making its Graph
-        HashMap<String, Double>[] queryMaps = new HashMap[numOfQ];
-        for(int queryN = 0; queryN < numOfQ; queryN++){
-            for(String key : keysOfQarray[queryN]){
-                String[] docName = key.split(" ");
-                String anotherPossibleKey = docName[1] + " " + docName[0];
-                if(fbm.bigCompleteMap.containsKey(key)){
-                    queryMaps[queryN].put(key, fbm.bigCompleteMap.get(key));
+        for (int queryN = 0; queryN < numOfQ; queryN++) {
+            // empty ranking for a query is handled here
+            if (ScoreMapArray[queryN].size() == 1 && ScoreMapArray[queryN].containsKey("empty")) {
+                System.out.println("\nSkipping query# " + (queryN + 1));
+            } 
+            // if there is only 1 doc entry in the original ranking then a Graph 
+            // cannot be created, so the measurement score is 0
+            else if (ScoreMapArray[queryN].size() == 1) {
+                System.out.println("\nQuery# " + (queryN+1) + "Graph cannot be built as it has only 1 entry");
+                System.out.println("----- Displaying Centrality Measure Result -----\n");
+                for (String docName : ScoreMapArray[queryN].keySet()) {
+                    //System.out.println(queryN + 1 + " Q0 " + docName + " " + 1 + " " + 0.0 + " Default");
+                    resultFile.write(queryN + 1 + " Q0 " + docName + " " + 1 + " " + 0.0 + " Default" + "\n");
                 }
-                else if(fbm.bigCompleteMap.containsKey(anotherPossibleKey)){
-                    queryMaps[queryN].put(key, fbm.bigCompleteMap.get(anotherPossibleKey));
+            } 
+            // otherwise, we build a graph and do centrality measure to re-construct
+            // the ranking for a query doc entries here
+            else {
+                keysOfQarray = new ArrayList<>();
+                main = new FBMmain();
+                keysOfQarray = main.buildKey(ScoreMapArray[queryN]);
+                // building a HashMap<String, Double> for making its Graph
+                HashMap<String, Double> queryMap = new HashMap<>();
+                for (String key : keysOfQarray) {
+                    String[] docName = key.split(" ");
+                    String anotherPossibleKey = docName[1] + " " + docName[0];
+                    if (fbm.bigCompleteMap.containsKey(key)) {
+                        queryMap.put(key, fbm.bigCompleteMap.get(key));
+                    } else if (fbm.bigCompleteMap.containsKey(anotherPossibleKey)) {
+                        queryMap.put(key, fbm.bigCompleteMap.get(anotherPossibleKey));
+                    }
                 }
-            }
-            queryMaps[queryN] = fbm.sortMap(queryMaps[queryN]);
-        }
-        
-        // Building a Graph for Each Query 
-        FBCgraph[] graph = new FBCgraph[numOfQ];
-        for(int queryN = 0; queryN < numOfQ; queryN++){
-            graph[queryN] = new FBCgraph(queryMaps[queryN]);
-            System.out.println("\nTotal # of Vertices: " + graph[queryN].getGraph().getVertexCount() + " Total # of Edges: " +graph[queryN].getGraph().getEdgeCount());
-            // Betweenness Centrality is performed here
-            System.out.println("\n----- Displaying Centrality Measure Result -----\n");
-            BetweennessCentrality measure = new BetweennessCentrality(graph[queryN].getGraph(), true, false);
-            measure.setRemoveRankScoresOnFinalize(false);
-            measure.evaluate();
-            List<Ranking<?>> ranking = measure.getRankings();
-            Iterator it = ranking.iterator();
-            // The maximum score = rank 1 score
-            double maxScore = ranking.get(0).rankScore;
-            // The minimum score = last rank score
-            double minScore = ranking.get(ranking.size()-1).rankScore;
-            int rCounter = 1;
-            while(it.hasNext()){
-                Ranking rank = (Ranking) it.next();
-                // normalizing formula is applied here
-                double normScore = (rank.rankScore - minScore)/(maxScore - minScore);
-                //System.out.println("Rank #" + rCounter + ": Vertex Name: " + rank.getRanked() + " Score: " + normScore + " Original TF-IDF Score: " + ScoreMapArray[0].get(""+rank.getRanked()));
-                System.out.println(queryN+1 + " Q0 " + rank.getRanked() + " " + rCounter + " " + normScore + " Default");
-                rCounter++;   
+                queryMap = fbm.sortMap(queryMap);
+
+                FBCgraph graph = new FBCgraph(queryMap);
+                System.out.println("\nQuery# " + (queryN+1) + " Total # of Vertices: " + graph.getGraph().getVertexCount() + " Total # of Edges: " + graph.getGraph().getEdgeCount());
+                // Betweenness Centrality is performed here
+                System.out.println("----- Displaying Centrality Measure Result -----\n");
+                BetweennessCentrality measure = new BetweennessCentrality(graph.getGraph(), true, false);
+                measure.setRemoveRankScoresOnFinalize(false);
+                measure.evaluate();
+                List<Ranking<?>> ranking = measure.getRankings();
+                Iterator it = ranking.iterator();
+                // The maximum score = rank 1 score
+                double maxScore = ranking.get(0).rankScore;
+                // The minimum score = last rank score
+                double minScore = ranking.get(ranking.size() - 1).rankScore;
+                int rCounter = 1;
+                while (it.hasNext()) {
+                    Ranking rank = (Ranking) it.next();
+                    // normalizing formula is applied here
+                    double normScore = (rank.rankScore - minScore) / (maxScore - minScore);
+                    //System.out.println("Rank #" + rCounter + ": Vertex Name: " + rank.getRanked() + " Score: " + normScore + " Original TF-IDF Score: " + ScoreMapArray[0].get(""+rank.getRanked()));
+                    //System.out.println(queryN + 1 + " Q0 " + rank.getRanked() + " " + rCounter + " " + normScore + " " + ScoreMapArray[queryN].get(""+rank.getRanked()) + " Default");
+                    resultFile.write(queryN + 1 + " Q0 " + rank.getRanked() + " " + rCounter + " " + normScore + " " + ScoreMapArray[queryN].get(""+rank.getRanked()) + " Default" + "\n");
+                    rCounter++;
+                }
+                //graph.displayGraph(graph.getGraph());
             }
         }
- 
+        resultFile.close();
+        System.out.println("Successfully wrote to the file.");
     }
-    
 }
