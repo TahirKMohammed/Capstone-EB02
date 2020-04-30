@@ -204,6 +204,6 @@ public class TopicMap {
             resultFile.write(nodes + "||" + bigCompleteMap.get(nodes) + "\n");
         }
         resultFile.close();
-        System.out.println("Successfully wrote to the file.");
+        System.out.println("Successfully wrote HashMap for the Query: " + topicNum + " to the file.");
     }
 }

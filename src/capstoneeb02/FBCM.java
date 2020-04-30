@@ -80,7 +80,7 @@ public class FBCM {
             }
         }
         resultFile.close();
-        System.out.println("Successfully wrote to the file.");
+        System.out.println("All done. Successfully wrote to the file.");
     }
 
 }
