@@ -29,7 +29,8 @@ public class TopicMap {
     public int numOfTopics = 200;
     int counter = 0;
     
-    public String dataDir = "/Users/kingtahir/Downloads/clueweb09PoolFilesTest";
+    //public String dataDir = "/home/Lucene/DocumentCorpus/eb02-all/clueweb09PoolFilesTest";
+    public String dataDir = "/home/Lucene/DocumentCorpus/eb02-all/cw09_pool/clueweb09PoolFiles";
     public ArrayList<String> htmlFileContents = new ArrayList<String>(); 
     public ArrayList<String> fileNameList = new ArrayList<String>();
     public ArrayList<String> textList = new ArrayList<String>();
@@ -60,14 +61,30 @@ public class TopicMap {
                     fileNameList.add(file.getName());
                 }
             }
-            
+            // debugging purpose
+//            System.out.println(fileNameList.get(110));
+//            System.out.println(fileNameList.get(111));
+        
             // Step 3: Convert the html contents to string
             textList.clear();
+            // debugging purpose
+            int i = 0;
             for (String str : htmlFileContents) {
-                // Converting file contents from html to String
-                Document document = Jsoup.parse(str, "ASCII");
-                // Adding file contents in String format 
-                textList.add(document.text());
+                
+                try {
+                    // Converting file contents from html to String
+                    Document document = Jsoup.parse(str, "UTF-8");
+                    // Adding file contents in String format 
+                    textList.add(document.text());
+                    //debugging purpose
+                    i++;
+                } 
+                catch(Exception e){
+                    System.out.println(fileNameList.get(i) + " is problematic");
+                    //debugging purpose
+                    i++;
+                    continue;
+                }   
             }
             // Step 4: Remove the stopwords
             int fileNO = 0;
@@ -198,7 +215,7 @@ public class TopicMap {
     
     public void writeToText(HashMap<String,Double> bigCompleteMap, int topicNum) throws IOException{
         String fileName = "" + topicNum;
-        FileWriter resultFile = new FileWriter("/Users/kingtahir/Documents/topic_maps/Graph_" + fileName + ".txt");
+        FileWriter resultFile = new FileWriter("/home/kiyoshimohammad/Documents/results/hashmaps_full_corpus/Graph_" + fileName + ".txt");
         
         for(String nodes : bigCompleteMap.keySet()){
             resultFile.write(nodes + "||" + bigCompleteMap.get(nodes) + "\n");

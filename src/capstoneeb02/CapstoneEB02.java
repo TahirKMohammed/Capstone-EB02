@@ -27,10 +27,11 @@ public class CapstoneEB02 {
     private static ArrayList<String> queryNumList = new ArrayList<String>();
     static String outputStr = "";
 	
-   String indexDir = "/Users/kingtahir/Documents/topic_result";
-   String dataDir = "/Users/kingtahir/Downloads/clueweb09PoolFilesTest";
+   String indexDir = "/home/kiyoshimohammad/Documents/results/topic_result_full_corpus";
+   //String dataDir = "/home/Lucene/DocumentCorpus/eb02-all/clueweb09PoolFilesTest";
+   String dataDir = "/home/Lucene/DocumentCorpus/eb02-all/cw09_pool/clueweb09PoolFiles";
    
-   public static String queryPath = "/Users/kingtahir/Documents/topics.txt";
+   public static String queryPath = "/home/kiyoshimohammad/Documents/capstone/Capstone-EB02/topics.txt";
    Indexer indexer;
    Searcher searcher;
 
@@ -54,7 +55,7 @@ public class CapstoneEB02 {
       }
       
       try {
-            File resultFile = new File("/Users/kingtahir/Documents/result_TF_IDF.txt");
+            File resultFile = new File("/home/kiyoshimohammad/Documents/capstone/Capstone-EB02/result_TF_IDF_full_corpus.txt");
             output = new BufferedWriter(new FileWriter(resultFile));
             output.write(outputStr);
         } catch (IOException e){

@@ -35,7 +35,7 @@ public class FBCM {
 
         // Step 2: possible keys (doc1 doc2) are created for each query ranking
         // if there are more than 1 doc entry in the ranking
-        FileWriter resultFile = new FileWriter("/Users/kingtahir/Documents/improved_result_TF_IDF_with_FBM_full_corpus.txt");
+        FileWriter resultFile = new FileWriter("/home/kiyoshimohammad/Documents/results/improved_result_TF_IDF_with_FBM_full_corpus.txt");
 
         for (int queryN = 0; queryN < numOfQ; queryN++) {
             // empty ranking for a query is handled here

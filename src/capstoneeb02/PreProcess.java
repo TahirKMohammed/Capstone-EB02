@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class PreProcess {
     
     public int numOfTopics = 200;
-    private String relevanceJudgementPath = "/Users/kingtahir/Documents/result_TF_IDF.txt";
+    private String relevanceJudgementPath = "/home/kiyoshimohammad/Documents/capstone/Capstone-EB02/result_TF_IDF_full_corpus.txt";
     private HashMap<String,Double>[] ScoreMapArray;
     
     public PreProcess() throws IOException{
